@@ -9,7 +9,7 @@ public final class GpsMath {
     return feet * FEET_TO_METRES;
   }
 
-  /** 3D distance in metres between two events (flat-earth, altitude included). */
+  /** 3D distance in metres between two events (flat-earth, altitude included) */
   public static double distanceMetres(GpsEvent a, GpsEvent b) {
     double meanLat = Math.toRadians((a.latitude + b.latitude) / 2.0);
     double dy = (b.latitude - a.latitude) * METRES_PER_DEGREE;
