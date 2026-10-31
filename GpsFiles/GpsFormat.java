@@ -1,0 +1,9 @@
+/** Formatting helpers for displaying GPS events. */
+public final class GpsFormat {
+  private GpsFormat() {}
+
+  /** Comma-delimited string of the 4 event items: name,latitude,longitude,altitude. */
+  public static String eventString(GpsEvent event) {
+    return event.name + "," + event.latitude + "," + event.longitude + "," + event.altitude;
+  }
+}

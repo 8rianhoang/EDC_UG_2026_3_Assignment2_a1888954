@@ -1,0 +1,69 @@
+import java.util.Optional;
+
+/** An inclusive latitude/longitude range used to restrict which GPS events are shown. */
+public final class GpsRange {
+  public static final double MIN_LATITUDE = -90.0;
+  public static final double MAX_LATITUDE = 90.0;
+  public static final double MIN_LONGITUDE = -180.0;
+  public static final double MAX_LONGITUDE = 180.0;
+
+  public final double latMin;
+  public final double latMax;
+  public final double lonMin;
+  public final double lonMax;
+
+  public GpsRange(double latMin, double latMax, double lonMin, double lonMax) {
+    this.latMin = latMin;
+    this.latMax = latMax;
+    this.lonMin = lonMin;
+    this.lonMax = lonMax;
+  }
+
+  /** The whole world: every valid event is inside this range. */
+  public static GpsRange unrestricted() {
+    return new GpsRange(MIN_LATITUDE, MAX_LATITUDE, MIN_LONGITUDE, MAX_LONGITUDE);
+  }
+
+  /** True when the event lies inside the range (boundaries are included). */
+  public boolean contains(GpsEvent event) {
+    return event.latitude >= latMin
+        && event.latitude <= latMax
+        && event.longitude >= lonMin
+        && event.longitude <= lonMax;
+  }
+
+  /**
+   * Builds a range from the text typed into the four input fields. A blank field means "no limit"
+   * (the lowest or highest valid value). Returns empty if the text is not a number, a value is
+   * outside the valid latitude/longitude range, or a minimum is greater than its maximum.
+   */
+  public static Optional<GpsRange> tryParse(
+      String latMin, String latMax, String lonMin, String lonMax) {
+    try {
+      double a = parseBound(latMin, MIN_LATITUDE);
+      double b = parseBound(latMax, MAX_LATITUDE);
+      double c = parseBound(lonMin, MIN_LONGITUDE);
+      double d = parseBound(lonMax, MAX_LONGITUDE);
+      // Written as positive checks so NaN is rejected too.
+      boolean valid =
+          a >= MIN_LATITUDE && b <= MAX_LATITUDE && a <= b
+              && c >= MIN_LONGITUDE && d <= MAX_LONGITUDE && c <= d;
+      return valid ? Optional.of(new GpsRange(a, b, c, d)) : Optional.empty();
+    } catch (NumberFormatException e) {
+      return Optional.empty();
+    }
+  }
+
+  private static double parseBound(String text, double blankValue) {
+    String trimmed = text.trim();
+    return trimmed.isEmpty() ? blankValue : Double.parseDouble(trimmed);
+  }
+
+  public String latitudeText() {
+    return latMin + " to " + latMax;
+  }
+
+  public String longitudeText() {
+    return lonMin + " to " + lonMax;
+  }
+}
