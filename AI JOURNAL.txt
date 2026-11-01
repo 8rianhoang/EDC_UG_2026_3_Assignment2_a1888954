@@ -1,0 +1,71 @@
+# AI Usage Journal – COMP 4023 Assignment 3
+
+
+### 23 October 2026 – Day 1: Planning and Setup
+
+**AI Contributions:**
+- Created a 7-day assignment plan.
+- Explained GPS classes and identified unclear requirements.
+- Drafted clarification email to tutor.
+- Generated initial `GpsMath.java` and `GpsGUI.java`.
+- Assisted with Sodium/Swidgets setup and Git structure.
+
+**My Contributions:**
+- Created the repository and project files.
+- Resolved build, classpath and file location errors.
+- Compiled and verified output: `Trackers: 10`.
+- Code modifications: [Add if applicable]
+
+**Day 2: Tracker Display Panels**  
+**AI Tool:** Claude Sonnet 5.5
+
+**AI Contribution:**
+- Assisted with event formatting, altitude removal and implementing tracker panels.
+- Provided code examples for the 3-second event clearing using Sodium FRP.
+
+**My Contribution:**
+- Integrated the code into the project, compiled and tested the implementation.
+- Reviewed the FRP logic and verified the tracker display behaviour.
+
+-----------------------------------------------------------------
+Day 3: Combined stream and range filter
+-----------------------------------------------------------------
+AI tool: Claude (Claude Sonnet 5.5, claude.ai)
+
+AI contribution:
+- Helped implement the GPS range filter using latitude and longitude boundaries.
+- Suggested adjustments to the GUI layout and filter placement.
+
+My contribution:
+- Set up the Java environment and resolved library and classpath issues.
+- Fixed file naming problems that prevented compilation.
+- Integrated the range filter and updated GUI components.
+- Reviewed the implementation to understand how snapshot and orElse work together.
+
+What I learned:
+I gained a better understanding of combining multiple event streams and using snapshot to filter GPS events based on the current range. I also learned how to organise the GUI components to make the application easier to use.
+
+-----------------------------------------------------------------
+Day 4: Distance over the last 5 minutes
+-----------------------------------------------------------------
+AI tool: Claude (Claude Sonnet 5.5, claude.ai)
+
+AI contribution:
+
+- Assisted with integrating the distance calculations into the GUI using Sodium FRP.
+- Provided headless checks for the distance logic.
+
+My contribution:
+- Implement for GPS point conversion and 3D distance calculations.
+- Implement the 5-minute sliding window for distance tracking.
+- Integrated the distance calculation and sliding window components into the project.
+- Reviewed how the distance calculations interact with the GPS range filter.
+- Worked through the use of map, accum and lift for updating distance values.
+- GUI testing: [Add what you tested and the result].
+
+What I learned:
+I learned how accum can maintain a history of GPS points and how lift allows distance calculations to respond to changes in the range filter. I also gained a better understanding of using a timer to remove old GPS points from the calculation.
+
+Verification:
+- Commits: GPS distance calculation, sliding window implementation, GUI distance tracking.
+- Testing evidence: [Add screenshots or test results].

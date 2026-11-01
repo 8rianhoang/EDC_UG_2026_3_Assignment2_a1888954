@@ -3,7 +3,7 @@ import java.util.*;
 import nz.sodium.*;
 
 /**
- * Simulates live GPS data by playing back records from the Geolife data set.
+ * Simulates live GPS data by playing back records from the Geolife data set
  * @author Ian Knight
  * @version 1.22
  */

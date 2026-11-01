@@ -1,25 +1,34 @@
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.function.UnaryOperator;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import nz.sodium.Cell;
 import nz.sodium.Stream;
+import nz.sodium.StreamSink;
+import nz.sodium.Unit;
 import nz.sodium.time.MillisecondsTimerSystem;
 import nz.sodium.time.TimerSystem;
 import swidgets.SButton;
 import swidgets.SLabel;
 import swidgets.STextField;
 
-/** GUI showing GPS data for each tracker, built with Sodium FRP and Swidgets. */
+/** GUI showing GPS data for each tracker, built with Sodium FRP and Swidgets */
 public class GpsGUI {
   private static final long CLEAR_DELAY_MS = 3000;
+  private static final int WIDE_LABEL_WIDTH = 270;
+  private static final long TICK_MS = 1000;
 
-  /** The range-filter control panel and the cell holding the range currently in force. */
+  /** The rangefilter control panel and the cell holding the range currently in force */
   private static final class FilterPanel {
     final JPanel panel;
     final Cell<GpsRange> range;
@@ -40,20 +49,41 @@ public class GpsGUI {
     TimerSystem<Long> timer = new MillisecondsTimerSystem();
     FilterPanel filter = buildFilterPanel();
 
+    // One tick per second lets the old points drop out of the 5-minute windows even when idle
+    StreamSink<Unit> tick = new StreamSink<Unit>();
+    new Timer(true)
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                tick.send(Unit.UNIT);
+              }
+            },
+            TICK_MS,
+            TICK_MS);
+
     JPanel trackerGrid = new JPanel(new GridLayout(0, 2, 8, 8));
     trackerGrid.setBorder(BorderFactory.createTitledBorder("Tracker displays"));
+    JPanel distances = new JPanel(new GridLayout(0, 4, 8, 4));
+    distances.setBorder(
+        BorderFactory.createTitledBorder("Distance travelled, last 5 minutes (in range)"));
     for (int i = 0; i < streams.length; i++) {
       trackerGrid.add(buildTrackerPanel(i, streams[i], timer, filter.range));
+      distances.add(new JLabel("Tracker " + i));
+      distances.add(new SLabel(distanceText(streams[i], timer, tick, filter.range)));
     }
 
-    JPanel south = new JPanel(new GridLayout(1, 2, 8, 8));
-    south.add(filter.panel);
-    south.add(buildCombinedPanel(streams, timer, filter.range));
+    // controls and the combined display sit beside the trackers so the window stays short
+    JPanel side = new JPanel();
+    side.setLayout(new BoxLayout(side, BoxLayout.Y_AXIS));
+    side.add(filter.panel);
+    side.add(buildCombinedPanel(streams, timer, filter.range));
+    side.add(distances);
 
     JFrame frame = new JFrame("GPS Tracker Dashboard");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.add(trackerGrid, BorderLayout.CENTER);
-    frame.add(south, BorderLayout.SOUTH);
+    frame.add(side, BorderLayout.EAST);
     frame.pack();
     frame.setVisible(true);
   }
@@ -68,7 +98,7 @@ public class GpsGUI {
     Cell<String> longitude = simplified.map(g -> String.valueOf(g.longitude)).hold("-");
     Cell<String> latestEvent = latestEventText(events, timer);
 
-    // Latest event, shown only while it is inside the current range. Because it is a lift over
+    // the latest in-range event, shown only while it is inside the current range. Because it is a lift over
     // the range cell it also updates straight away when the filter is changed.
     Cell<Optional<GpsEvent>> lastEvent = events.map(Optional::of).hold(Optional.empty());
     Cell<String> inRange =
@@ -88,13 +118,46 @@ public class GpsGUI {
     panel.add(new JLabel("Longitude"));
     panel.add(new SLabel(longitude));
     panel.add(new JLabel("Latest event"));
-    panel.add(new SLabel(latestEvent));
+    panel.add(wideLabel(latestEvent));
     panel.add(new JLabel("Latest in range"));
-    panel.add(new SLabel(inRange));
+    panel.add(wideLabel(inRange));
     return panel;
   }
 
-  /** Shows each event's text when it arrives and clears it 3 s later unless overwritten. */
+  /**
+   * the total  distance (whole metres, rounded up) travelled by one tracker in the last 5 minutes,
+   * counting only points inside the current range
+   */
+  private static Cell<String> distanceText(
+      Stream<GpsEvent> events, TimerSystem<Long> timer, Stream<Unit> tick, Cell<GpsRange> range) {
+    // Feet to metres happens here, in a map.
+    Stream<TrackPoint> points = events.map(TrackPoint::from);
+    Stream<UnaryOperator<DistanceWindow>> sAdd =
+        points.snapshot(timer.time, (point, now) -> addPoint(point, now));
+    Stream<UnaryOperator<DistanceWindow>> sPrune =
+        tick.snapshot(timer.time, (unit, now) -> pruneAt(now));
+    Cell<DistanceWindow> window =
+        sAdd.orElse(sPrune).accum(DistanceWindow.empty(), (change, w) -> change.apply(w));
+    // Lifting over the range means the total also updates when the filter changes.
+    return window.lift(range, (w, r) -> w.distanceMetres(r) + " m");
+  }
+
+  private static UnaryOperator<DistanceWindow> addPoint(TrackPoint point, long now) {
+    return w -> w.add(point, now);
+  }
+
+  private static UnaryOperator<DistanceWindow> pruneAt(long now) {
+    return w -> w.prune(now);
+  }
+
+  /** A label wide enough for a full event string (labels size themselves from empty text) */
+  private static SLabel wideLabel(Cell<String> text) {
+    SLabel label = new SLabel(text);
+    label.setPreferredSize(new Dimension(WIDE_LABEL_WIDTH, label.getPreferredSize().height));
+    return label;
+  }
+
+  /** Shows each event's text when it arrives and clears it 3 s later unless overwritten */
   private static Cell<String> latestEventText(Stream<GpsEvent> events, TimerSystem<Long> timer) {
     Stream<String> sText = events.map(GpsFormat::eventString);
     // Every new event pushes the alarm time back to (now + 3 s).
@@ -106,7 +169,7 @@ public class GpsGUI {
     return sText.orElse(sClear).hold("");
   }
 
-  /** Control panel: four input fields, a Set button and labels showing the current setting. */
+  /** Control panel: four input fields, a Set button and labels showing the current setting */
   private static FilterPanel buildFilterPanel() {
     STextField latMin = new STextField("", 10);
     STextField latMax = new STextField("", 10);
@@ -114,11 +177,11 @@ public class GpsGUI {
     STextField lonMax = new STextField("", 10);
     SButton setButton = new SButton("Set filter");
 
-    // What the fields currently say, as a range (empty if the text is not valid).
+    // What the fields currently say, as a range (empty if the text is not valid)
     Cell<Optional<GpsRange>> typed =
         latMin.text.lift(latMax.text, lonMin.text, lonMax.text, GpsRange::tryParse);
 
-    // On each click, snapshot the typed range. Valid ranges replace the current one.
+    // On each click, snapshot the typed range. Valid ranges replace the current one
     Stream<Optional<GpsRange>> sSet = setButton.sClicked.snapshot(typed);
     Cell<GpsRange> range =
         Stream.filterOptional(sSet).hold(GpsRange.unrestricted());
@@ -137,7 +200,7 @@ public class GpsGUI {
     panel.add(new JLabel("Longitude max"));
     panel.add(lonMax);
     panel.add(setButton);
-    panel.add(new SLabel(status));
+    panel.add(wideLabel(status));
     panel.add(new JLabel("Current latitude"));
     panel.add(new SLabel(range.map(GpsRange::latitudeText)));
     panel.add(new JLabel("Current longitude"));
@@ -158,7 +221,7 @@ public class GpsGUI {
     JPanel panel = new JPanel(new GridLayout(0, 1, 4, 4));
     panel.setBorder(BorderFactory.createTitledBorder("All trackers, in range only"));
     panel.add(new JLabel("Latest in-range event"));
-    panel.add(new SLabel(latestEventText(inRange, timer)));
+    panel.add(wideLabel(latestEventText(inRange, timer)));
     return panel;
   }
 }

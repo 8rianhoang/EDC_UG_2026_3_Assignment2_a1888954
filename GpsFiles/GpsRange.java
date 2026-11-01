@@ -1,6 +1,6 @@
 import java.util.Optional;
 
-/** An inclusive latitude/longitude range used to restrict which GPS events are shown. */
+/** An inclusive latitude/longitude range used to restrict which GPS events are shown */
 public final class GpsRange {
   public static final double MIN_LATITUDE = -90.0;
   public static final double MAX_LATITUDE = 90.0;
@@ -19,23 +19,25 @@ public final class GpsRange {
     this.lonMax = lonMax;
   }
 
-  /** The whole world: every valid event is inside this range. */
+  /** The whole world: every valid event is inside this range */
   public static GpsRange unrestricted() {
     return new GpsRange(MIN_LATITUDE, MAX_LATITUDE, MIN_LONGITUDE, MAX_LONGITUDE);
   }
 
   /** True when the event lies inside the range (boundaries are included). */
   public boolean contains(GpsEvent event) {
-    return event.latitude >= latMin
-        && event.latitude <= latMax
-        && event.longitude >= lonMin
-        && event.longitude <= lonMax;
+    return contains(event.latitude, event.longitude);
+  }
+
+  /** True when the position lies inside the range (boundaries are included). */
+  public boolean contains(double latitude, double longitude) {
+    return latitude >= latMin && latitude <= latMax && longitude >= lonMin && longitude <= lonMax;
   }
 
   /**
    * Builds a range from the text typed into the four input fields. A blank field means "no limit"
    * (the lowest or highest valid value). Returns empty if the text is not a number, a value is
-   * outside the valid latitude/longitude range, or a minimum is greater than its maximum.
+   * outside the valid latitude/longitude range, or a minimum is greater than its maximum
    */
   public static Optional<GpsRange> tryParse(
       String latMin, String latMax, String lonMin, String lonMax) {

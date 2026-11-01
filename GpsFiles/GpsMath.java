@@ -1,4 +1,4 @@
-/** Pure helper functions for unit conversion and distance. */
+/** Pure helper functions for unit conversion and distance */
 public final class GpsMath {
   public static final double FEET_TO_METRES = 0.3048;
   public static final double METRES_PER_DEGREE = 111_320.0;
@@ -9,12 +9,15 @@ public final class GpsMath {
     return feet * FEET_TO_METRES;
   }
 
-  /** 3D distance in metres between two events (flat-earth, altitude included) */
-  public static double distanceMetres(GpsEvent a, GpsEvent b) {
+  /**
+   * 3D distance in metres between two points. The curvature of the Earth is ignored, but the
+   * altitude difference is included.
+   */
+  public static double distanceMetres(TrackPoint a, TrackPoint b) {
     double meanLat = Math.toRadians((a.latitude + b.latitude) / 2.0);
     double dy = (b.latitude - a.latitude) * METRES_PER_DEGREE;
     double dx = (b.longitude - a.longitude) * METRES_PER_DEGREE * Math.cos(meanLat);
-    double dz = feetToMetres(b.altitude - a.altitude);
+    double dz = b.altitudeMetres - a.altitudeMetres;
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 }
