@@ -4,7 +4,7 @@
 ### 23 October 2026 – Day 1: Planning and Setup
 
 **AI Contributions:**
-- Created a 7-day assignment plan.
+- Created a 7-step/timeline assignment plan.
 - Explained GPS classes and identified unclear requirements.
 - Drafted clarification email to tutor.
 - Generated initial `GpsMath.java` and `GpsGUI.java`.
@@ -69,3 +69,17 @@ I learned how accum can maintain a history of GPS points and how lift allows dis
 Verification:
 - Commits: GPS distance calculation, sliding window implementation, GUI distance tracking.
 - Testing evidence: [Add screenshots or test results].
+
+-----------------------------------------------------------------
+Day 5: Test cases 
+-----------------------------------------------------------------
+
+**AI Tool:** Claude (Anthropic)
+
+**AI Contribution:**
+
+I asked Claude to help generate JUnit test cases for my existing GPS application. Claude provided tests covering GPS event formatting, coordinate filtering, altitude conversion, distance calculations, five-minute sliding windows and FRP processing.
+
+**My Contribution:**
+
+I reviewed the generated test files and compared them with my existing implementation to understand what each test was checking. The tests still need to be executed and verified.
