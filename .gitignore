@@ -1,0 +1,4 @@
+*.class
+jacoco.exec
+coverage.csv
+coverage-report/
