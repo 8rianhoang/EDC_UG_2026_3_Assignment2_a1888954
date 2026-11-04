@@ -83,3 +83,33 @@ I asked Claude to help generate JUnit test cases for my existing GPS application
 **My Contribution:**
 
 I reviewed the generated test files and compared them with my existing implementation to understand what each test was checking. The tests still need to be executed and verified.
+
+-----------------------------------------------------------------
+Day 6: Recording and testing
+-----------------------------------------------------------------
+
+**AI Tool:** Claude (Claude Sonnet 5.5, claude.ai — verify model version)
+
+### Work Completed
+
+Focused on reviewing and testing the GPS application to ensure the existing functionality worked correctly. This included checking the tracker displays, coordinate filtering, distance calculations and event updates.
+
+The GPS processing logic was separated from the GUI into `GpsLogic.java` to make individual functions easier to test.
+
+JUnit tests were added to cover GPS formatting, coordinate filtering, distance calculations, altitude conversion, sliding-window behaviour and FRP processing.
+
+### AI Assistance
+
+I used Claude to assist with refactoring the GPS processing logic, generating initial JUnit test cases and creating a controllable clock for time-based testing. Claude also assisted with the initial coverage script, testing report and video demonstration script.
+
+### Manual Review and Verification
+
+I manually checked the GUI to ensure the tracker displays updated correctly and the latitude and longitude filters responded as expected.
+
+The generated tests were reviewed to understand their purpose and expected results.
+
+**Testing results to confirm:**
+- 69 JUnit tests passing.
+- 100% line coverage for the logic classes.
+- Three-second event clearing and five-minute sliding-window behaviour.
+- Screenshots and testing evidence added to the report.
